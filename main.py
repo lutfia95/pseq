@@ -97,30 +97,17 @@ def write_summary(path: str, rows: List[MatchRow], unmatched: List[FastaRecord])
                 out.write(f"{t.name}\t{tL}\t{tK}\t{tR}\t{tK+tR}\n")
 
 
-def main():
-    
+def cmd_generate_decoy(args):
     print(f'[WARNING] This is only your system check;) \n ')
     print_arch()
 
-    ap = argparse.ArgumentParser(
-        description="Match each target protein to a unique decoy with similar length and similar (K+R) content."
-    )
-    ap.add_argument("--targets", required=True, help="Target FASTA")
-    ap.add_argument("--decoys", required=True, help="Decoy FASTA (real decoys)")
-    ap.add_argument("--out-fasta", required=True, help="Output FASTA with interleaved target/decoy records")
-    ap.add_argument("--out-summary", required=True, help="Output TSV summary")
-    ap.add_argument("--len-weight", type=int, default=1, help="Weight for length difference in scoring")
-    ap.add_argument("--kr-weight", type=int, default=10, help="Weight for (K+R) difference in scoring")
-    ap.add_argument("--max-len-window", type=int, default=2000, help="Max length search window (aa)")
-    ap.add_argument("--max-kr-window", type=int, default=2000, help="Max (K+R) search window (count)")
-    args = ap.parse_args()
-    print(f'[INFO] Reading targets fasta: \n {args.targets}')
+    print(f'[INFO] Reading targets fasta:\n {args.targets}')
     targets = read_fasta(args.targets)
-    print(f'[INFO] Finished reading targets fasta: \n {args.targets}')
-    print(f'[INFO] Reading decoys fasta: \n {args.decoys}')
+    print(f'[INFO] Finished reading targets fasta:\n {args.targets}')
+
+    print(f'[INFO] Reading decoys fasta:\n {args.decoys}')
     decoys = read_fasta(args.decoys)
-    print(f'[INFO] Finished reading decoys fasta: \n {args.decoys}')
-    
+    print(f'[INFO] Finished reading decoys fasta:\n {args.decoys}')
 
     matcher = DecoyMatcher(
         decoys=decoys,
@@ -129,16 +116,43 @@ def main():
         max_len_window=args.max_len_window,
         max_kr_window=args.max_kr_window,
     )
+
     print(f'[INFO] Matching...')
     pairs, rows, unmatched = matcher.match_all(targets)
     print(f'[INFO] Finished target matching!')
-    
+
     print(f'[INFO] Writing {len(pairs)} to {args.out_fasta}')
     write_fasta_pairs(args.out_fasta, pairs)
     write_summary(args.out_summary, rows, unmatched)
     print(f'[INFO] Finished writing {args.out_fasta} and {args.out_summary}!')
+    
 
 
-# python main.py --targets ./data/targets.fasta --decoys ./data/ecoli.fasta --out-fasta ./output/mixed.fasta --out-summary ./output/summary.tsv
+def main():
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    g = sub.add_parser(
+        "generate_decoy",
+        help="Match each target protein to a unique decoy with similar length and similar (K+R) content.",
+    )
+    g.add_argument("--targets", required=True, help="Target FASTA")
+    g.add_argument("--decoys", required=True, help="Decoy FASTA (real decoys)")
+    g.add_argument("--out-fasta", required=True, help="Output FASTA with interleaved target/decoy records")
+    g.add_argument("--out-summary", required=True, help="Output TSV summary")
+    g.add_argument("--len-weight", type=int, default=1, help="Weight for length difference in scoring")
+    g.add_argument("--kr-weight", type=int, default=10, help="Weight for (K+R) difference in scoring")
+    g.add_argument("--max-len-window", type=int, default=2000, help="Max length search window (aa)")
+    g.add_argument("--max-kr-window", type=int, default=2000, help="Max (K+R) search window (count)")
+    g.set_defaults(func=cmd_generate_decoy)
+
+    args = ap.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
+
+# python main.py generate_decoy --targets ./data/targets.fasta --decoys ./data/ecoli.fasta --out-fasta ./output/mixed.fasta --out-summary ./output/summary.tsv
 if __name__ == "__main__":
     main()
