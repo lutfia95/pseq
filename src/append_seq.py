@@ -55,7 +55,7 @@ def merge_pairs(records):
 
         eco_index = i + 2
         merge_idx = len(s1)
-        new_header = f"> {h1} && {h2} && {eco_index} && {merge_idx}"
+        new_header = f">{h1} && {h2} && {eco_index} && {merge_idx}"
         out.append((new_header, s1 + s2))
     return out
 
