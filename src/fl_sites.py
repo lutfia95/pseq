@@ -338,7 +338,7 @@ def main() -> None:
 
     plt.xticks(x, p2.index.astype(str), rotation=20, ha="right")
     plt.ylabel("Unique sites (count)")
-    plt.title("Unique sites by type and class (BACSU vs SORC vs MIXED)")
+    plt.title(f"Unique sites by type and class (BACSU vs {prefix} vs MIXED)")
     plt.legend()
     plt.box(False)
 
