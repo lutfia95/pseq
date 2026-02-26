@@ -1,5 +1,6 @@
 from __future__ import annotations
 #python .\src\fl_sites.py --fasta .\FLAna\bacsu_sorc\bacsu_sorc\bsu_sorc.fasta --sites-dir .\FLAna\bacsu_sorc\bacsu_sorc\reports\ --outdir .\output\bacsu_sorc --log-y --style 2
+#python .\src\fl_sites.py --fasta .\FLAna\append_raw\append.fasta  --sites-dir .\FLAna\append_raw_new\reports\  --outdir .\output\bacsu_ecoli --log-y --style 1 --prefix ECO 
 import argparse
 import csv
 import os
@@ -28,6 +29,11 @@ def parse_args() -> argparse.Namespace:
         "--fasta",
         required=True,
         help="Path to the FASTA used for the search.",
+    )
+    p.add_argument(
+        "--prefix",
+        required=True,
+        help="Prefix of the protein names.",
     )
     p.add_argument(
         "--sites-dir",
@@ -135,8 +141,8 @@ def infer_type_label(filename: str) -> str:
 class ParsedSite:
     proteins: list[str]          # protein keys (best-effort)
     positions: list[int]         # positions extracted from "(n)"
-    per_side: list[str]          # "BACSU" / "SORC" / "UNKNOWN" per extracted position
-    site_class: str              # "BACSU-only" / "SORC-only" / "MIXED" / "UNKNOWN"
+    per_side: list[str]          # "BACSU" / f"{prefix}" / "UNKNOWN" per extracted position
+    site_class: str              # "BACSU-only" / f"{prefix}-only" / "MIXED" / "UNKNOWN"
 
 
 PROT_SPLIT_RE = re.compile(r"-(?=(?:sp|tr)\|)", re.IGNORECASE)
@@ -172,7 +178,7 @@ def extract_protein_keys_and_positions(protein_field: object) -> tuple[list[str]
     positions = [int(x) for x in POS_RE.findall(s)]
     return (proteins2, positions)
 
-def classify_site(protein_field: object, boundaries: dict[str, int]) -> ParsedSite:
+def classify_site(protein_field: object, boundaries: dict[str, int], prefix: str) -> ParsedSite:
     proteins, positions = extract_protein_keys_and_positions(protein_field)
 
     if not proteins or not positions:
@@ -213,12 +219,12 @@ def classify_site(protein_field: object, boundaries: dict[str, int]) -> ParsedSi
         b_for_pos = [buniq[0]] * len(positions)
 
     for pos, b in zip(positions, b_for_pos):
-        per_side.append("SORC" if pos > b else "BACSU")
+        per_side.append(prefix if pos > b else "BACSU")
 
     if all(x == "BACSU" for x in per_side):
         site_class = "BACSU-only"
-    elif all(x == "SORC" for x in per_side):
-        site_class = "SORC-only"
+    elif all(x == prefix for x in per_side):
+        site_class = f"{prefix}-only"
     elif any(x == "UNKNOWN" for x in per_side):
         site_class = "UNKNOWN"
     else:
@@ -257,6 +263,7 @@ def main() -> None:
     sites_dir = Path(args.sites_dir)
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+    prefix = args.prefix
 
     boundaries = read_fasta_boundaries(fasta_path, style=args.style)
 
@@ -281,7 +288,7 @@ def main() -> None:
             if c in df.columns:
                 df[c] = pd.to_numeric(df[c], errors="coerce")
 
-        parsed = df["Protein"].map(lambda s: classify_site(s, boundaries))
+        parsed = df["Protein"].map(lambda s: classify_site(s, boundaries, prefix))
         df["site_class"] = parsed.map(lambda x: x.site_class)
         df["positions"] = parsed.map(lambda x: ";".join(str(p) for p in x.positions))
         df["sides"] = parsed.map(lambda x: ";".join(x.per_side))
@@ -305,13 +312,13 @@ def main() -> None:
 
     pivot = summary.pivot(index="type_label", columns="site_class", values="n_sites").fillna(0).astype(int)
 
-    for c in ["BACSU-only", "SORC-only", "MIXED", "UNKNOWN"]:
+    for c in ["BACSU-only", f"{prefix}-only", "MIXED", "UNKNOWN"]:
         if c not in pivot.columns:
             pivot[c] = 0
-    pivot = pivot[["BACSU-only", "SORC-only", "MIXED", "UNKNOWN"]]
+    pivot = pivot[["BACSU-only", f"{prefix}-only", "MIXED", "UNKNOWN"]]
     
     want_types = ["cross-linked", "mono-linked", "loop-linked"]
-    want_cols = ["BACSU-only", "SORC-only", "MIXED"]
+    want_cols = ["BACSU-only", f"{prefix}-only", "MIXED"]
 
     p2 = pivot.copy()
     p2 = p2.reindex([t for t in want_types if t in p2.index]).fillna(0).astype(int)
@@ -326,7 +333,7 @@ def main() -> None:
 
     plt.figure(figsize=(12.0, 5.8))
     b1 = plt.bar(x - w, p2["BACSU-only"].to_numpy(), width=w, label="BACSU-only")
-    b2 = plt.bar(x,      p2["SORC-only"].to_numpy(), width=w, label="SORC-only")
+    b2 = plt.bar(x,      p2[f"{prefix}-only"].to_numpy(), width=w, label=f"{prefix}-only")
     b3 = plt.bar(x + w,  p2["MIXED"].to_numpy(),     width=w, label="MIXED")
 
     plt.xticks(x, p2.index.astype(str), rotation=20, ha="right")
@@ -364,10 +371,10 @@ def main() -> None:
     idx = [t for t in preferred if t in pivot.index] + [t for t in pivot.index if t not in preferred]
     pivot = pivot.reindex(idx)
 
-    for c in ["BACSU-only", "SORC-only", "MIXED", "UNKNOWN"]:
+    for c in ["BACSU-only", f"{prefix}-only", "MIXED", "UNKNOWN"]:
         if c not in pivot.columns:
             pivot[c] = 0
-    pivot = pivot[["BACSU-only", "SORC-only", "MIXED", "UNKNOWN"]]
+    pivot = pivot[["BACSU-only", f"{prefix}-only", "MIXED", "UNKNOWN"]]
 
     x = np.arange(len(pivot.index))
     bottom = np.zeros(len(pivot.index), dtype=int)
@@ -422,7 +429,7 @@ def main() -> None:
     if "Spectrum_Number" in sites_all.columns:
         tmp = sites_all.copy()
         tmp["support_bin"] = tmp["Spectrum_Number"].map(support_bin)
-        tmp["is_wrong"] = tmp["site_class"].isin(["SORC-only", "MIXED"]).astype(int)
+        tmp["is_wrong"] = tmp["site_class"].isin([f"{prefix}-only", "MIXED"]).astype(int)
 
         bins_order = ["1", "2", "3-5", "6-10", "11+", "NA"]
 
