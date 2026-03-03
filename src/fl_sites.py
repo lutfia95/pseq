@@ -1,6 +1,6 @@
 from __future__ import annotations
-#python .\src\fl_sites.py --fasta .\FLAna\bacsu_sorc\bacsu_sorc\bsu_sorc.fasta --sites-dir .\FLAna\bacsu_sorc\bacsu_sorc\reports\ --outdir .\output\bacsu_sorc --log-y --style 2
-#python .\src\fl_sites.py --fasta .\FLAna\append_raw\append.fasta  --sites-dir .\FLAna\append_raw_new\reports\  --outdir .\output\bacsu_ecoli --log-y --style 1 --prefix ECO 
+#python .\fl_sites.py --fasta .\data\bsu_sorc.fasta --sites-dir .\data\bacsu_sorc\bacsu_sorc\reports\ --outdir .\output\bacsu_sorc --style 2 --prefix SORC
+#python .\fl_sites.py --fasta .\data\append.fasta  --sites-dir .\data\append_raw_new\\reports\  --outdir .\output\bacsu_ecoli  --style 1 --prefix ECO 
 import argparse
 import csv
 import os
@@ -297,6 +297,44 @@ def main() -> None:
         all_rows.append(df)
 
     sites_all = pd.concat(all_rows, ignore_index=True)
+        #  Cross-linked inter vs intra counts 
+    if "Protein_Type" in sites_all.columns:
+        cl = sites_all[sites_all["type_label"] == "cross-linked"].copy()
+        if not cl.empty:
+            # Normalize labels a bit
+            cl["Protein_Type"] = cl["Protein_Type"].astype(str).str.strip()
+
+            inter_mask = cl["Protein_Type"].str.contains("Inter", case=False, na=False)
+            intra_mask = cl["Protein_Type"].str.contains("Intra", case=False, na=False)
+
+            n_inter = int(inter_mask.sum())
+            n_intra = int(intra_mask.sum())
+            n_other = int((~(inter_mask | intra_mask)).sum())
+
+            print("\nCross-linked counts (Protein_Type):")
+            print(f"  Inter-Protein: {n_inter}")
+            print(f"  Intra-Protein: {n_intra}")
+            if n_other:
+                print(f"  Other/Unknown: {n_other}")
+
+            # write one summary table 
+            inter_intra_df = pd.DataFrame(
+                {
+                    "type_label": ["cross-linked"] * 3,
+                    "Protein_Type_class": ["Inter-Protein", "Intra-Protein", "Other/Unknown"],
+                    "count": [n_inter, n_intra, n_other],
+                }
+            )
+            inter_intra_df.to_csv(outdir / "crosslinked_inter_intra_counts.tsv", sep="\t", index=False)
+            cl2 = cl.copy()
+            cl2["InterIntra"] = np.where(inter_mask, "Inter-Protein", np.where(intra_mask, "Intra-Protein", "Other/Unknown"))
+            breakdown = (
+                cl2.groupby(["InterIntra", "site_class"], observed=True)
+                .size()
+                .rename("count")
+                .reset_index()
+            )
+            breakdown.to_csv(outdir / "crosslinked_inter_intra_by_site_class.tsv", sep="\t", index=False)
 
     annotated_path = outdir / "sites_annotated.tsv"
     sites_all.to_csv(annotated_path, sep="\t", index=False)
