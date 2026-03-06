@@ -150,9 +150,8 @@ def main():
     args.func(args)
 
 
-if __name__ == "__main__":
-    main()
 
 # python main.py generate_decoy --targets ./data/targets.fasta --decoys ./data/ecoli.fasta --out-fasta ./output/mixed.fasta --out-summary ./output/summary.tsv
+#python main.py generate_decoy --targets ./data/targets.fasta --decoys ./data/saccharomyces_cerevisiae.fasta --out-fasta ./output/bacsu_saccharomyces_cerevisiae.fasta --out-summary ./output/summary.tsv
 if __name__ == "__main__":
     main()
