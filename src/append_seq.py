@@ -37,6 +37,12 @@ def is_bsub(tag):
 def is_ecoli(tag):
     return tag.startswith("ECO")
 
+def is_yeast(tag):
+    return tag == "YEAST"
+
+def is_valid_append_target(tag):
+    return is_ecoli(tag) or is_yeast(tag)
+
 def merge_pairs(records):
     if len(records) % 2 != 0:
         raise SystemExit(f"FASTA has odd number of records ({len(records)}). Need pairs.")
@@ -50,8 +56,8 @@ def merge_pairs(records):
 
         if not is_bsub(t1):
             raise SystemExit(f"Record {i+1} is not BACSU: {h1}")
-        if not is_ecoli(t2):
-            raise SystemExit(f"Record {i+2} is not ECO*: {h2}")
+        if not is_valid_append_target(t2):
+            raise SystemExit(f"Record {i+2} is not ECO* or YEAST: {h2}")
 
         eco_index = i + 2
         merge_idx = len(s1)
