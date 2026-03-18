@@ -1,6 +1,9 @@
 from __future__ import annotations
 #python .\fl_sites.py --fasta .\data\bsu_sorc.fasta --sites-dir .\data\bacsu_sorc\bacsu_sorc\reports\ --outdir .\output\bacsu_sorc --style 2 --prefix SORC
 #python .\fl_sites.py --fasta .\data\append.fasta  --sites-dir .\data\append_raw_new\\reports\  --outdir .\output\bacsu_ecoli  --style 1 --prefix ECO 
+#python .\fl_sites.py --fasta .\data\bacsu_accharomyces_cerevisiae_append.fasta --sites-dir .\data\yeast\yeast\reports\ --outdir .\output\bacsu_YEAST --style 1 --prefix YEAST
+#python .\fl_sites.py --fasta .\data\bsu_sorc.fasta --sites-dir .\data\lukas_bacsu_sorc_dsbo\synbox\reports\ --outdir .\output\lukas_bacsu_sorc_dsbo --style 2 --prefix SORC
+
 import argparse
 import csv
 import os
