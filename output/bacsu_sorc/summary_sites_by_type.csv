@@ -1,0 +1,8 @@
+type_label,site_class,n_sites
+cross-linked,BACSU-only,78179
+cross-linked,MIXED,1182
+cross-linked,SORC-only,13
+loop-linked,BACSU-only,2628
+loop-linked,SORC-only,7
+mono-linked,BACSU-only,11661
+mono-linked,SORC-only,37

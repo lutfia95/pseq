@@ -1,0 +1,9 @@
+type_label,site_class,n_sites
+cross-linked,BACSU-only,22011
+cross-linked,ECO-only,13
+cross-linked,MIXED,358
+loop-linked,BACSU-only,1492
+loop-linked,ECO-only,9
+loop-linked,MIXED,1
+mono-linked,BACSU-only,6202
+mono-linked,ECO-only,48

@@ -1,0 +1,8 @@
+type_label,site_class,n_sites
+cross-linked,BACSU-only,22053
+cross-linked,MIXED,103
+cross-linked,YEAST-only,7
+loop-linked,BACSU-only,1445
+loop-linked,YEAST-only,1
+mono-linked,BACSU-only,6349
+mono-linked,YEAST-only,24

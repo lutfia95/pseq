@@ -1,0 +1,4 @@
+type_label	Protein_Type_class	count
+cross-linked	Inter-Protein	34354
+cross-linked	Intra-Protein	45020
+cross-linked	Other/Unknown	0

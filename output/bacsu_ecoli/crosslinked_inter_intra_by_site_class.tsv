@@ -1,0 +1,8 @@
+InterIntra	site_class	count
+Inter-Protein	BACSU-only	10168
+Inter-Protein	MIXED	191
+
+
+Intra-Protein	BACSU-only	11843
+Intra-Protein	ECO-only	13
+Intra-Protein	MIXED	167
